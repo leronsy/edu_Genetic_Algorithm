@@ -1,8 +1,6 @@
-import random
 import math
 import numpy as np
 import random
-import operator
 from sklearn.metrics import mean_squared_error
 from sklearn.linear_model import LinearRegression
 
@@ -11,15 +9,16 @@ class Individ:
 
     def __init__(self, length, parent1=None, parent2=None, chromosome=None):
 
+        self.chromosome = list()
+        self.parent1 = None
+        self.parent2 = None
         if chromosome:
             self.chromosome = chromosome
-        else:
-            self.chromosome = list()
+        elif parent1 and parent2:
+            self.cross(parent1, parent2)
 
-            if parent1 and parent2:
-                self.cross(parent1, parent2)
-            else:
-                self.generate(length)
+        else:
+            self.generate(length)
 
     # TODO: можно добавить список генов для мутации (по умолчанию - None)
     def mutate(self, probability):
@@ -109,7 +108,8 @@ class Population:
                           individ_set_initial=individ_set_future, classifier=self.classifier)
 
     # TODO: добавить второй параметр сортировки - количество активных генов itertools?
-    def sort(self, population):
+    @staticmethod
+    def sort(population):
         return sorted(population, key=lambda ind: ind[2])
 
     def fitness(self, used_genes):
@@ -127,10 +127,10 @@ class Population:
         parent2 = parent2_list[1]
         return parent1, parent2
 
-    # def get_info(self):
-    #     for ind in self.individ_set_initial:
-    #         ind[1].print_individ()
-    #     return
+    def get_info(self):
+        for ind in self.individ_set_initial:
+            print(ind[0], ind[1], ind[2])
+        print('\n')
 
     def get_best(self):
         best_individ_list = self.sort(self.individ_set_initial)[0]
@@ -158,19 +158,19 @@ class World:
 
     def evolve(self, eps=10 ** -3):
         plato = 0
+        cur_best_individ = None
         while len(self.generation_list) < self.generation_limit:
             last_generation = self.generation_list[-1]
             prev_best_individ, prev_best_score = last_generation.get_best()
             self.generation_list.append(self.next_gen())
             last_generation = self.generation_list[-1]
             cur_best_individ, cur_best_score = last_generation.get_best()
-            print(cur_best_individ, cur_best_score)
             if math.fabs(prev_best_score - cur_best_score) < eps:
                 plato += 1
                 if plato > 2:
                     break
+            last_generation.get_info()
 
-        # print(cur_best_individ.print_individ())
         return cur_best_individ
 
     def next_gen(self, first=False):
